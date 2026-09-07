@@ -53,6 +53,9 @@ onMounted(() => {
 
   if (savedUser) {
     user.value = JSON.parse(savedUser)
+  } else {
+    // Awtomatikong ipapadala sa /login kapag walang naka-save na user
+    navigateTo('/login')
   }
 })
 
