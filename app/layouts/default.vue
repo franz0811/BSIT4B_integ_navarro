@@ -9,18 +9,18 @@
         >
           <v-list>
             <v-list-item
-              prepend-avatar="https://randomuser.me/api/portraits/women/85.jpg"
-              subtitle="sandra_a88@gmailcom"
-              title="Sandra Adams"
+              prepend-avatar="https://www.googleapis.com/oauth2/v3/userinfo"
+              subtitle="franznavarro260@gmail.com"
+              title="Franz Navarro"
             ></v-list-item>
           </v-list>
 
           <v-divider></v-divider>
 
           <v-list density="compact" nav>
-            <v-list-item prepend-icon="mdi-folder" title="Dashboard" value="dashboard"></v-list-item>
-            <v-list-item prepend-icon="mdi mdi-qrcode" title="Qr-Scanner" value="qr-scanner"></v-list-item>
-            <v-list-item prepend-icon="mdi-star" title="Starred" value="starred"></v-list-item>
+            <v-list-item prepend-icon="mdi-folder" title="Dashboard" value="dashboard" to="/"></v-list-item>
+            <v-list-item prepend-icon="mdi mdi-qrcode" title="Qr-Scanner" value="qr-scanner" to="qr-scanner"></v-list-item>
+            <v-list-item prepend-icon="mdi-star" title="Weather" value="weather" to="weather"></v-list-item>
           </v-list>
         </v-navigation-drawer>
         <v-app-bar>
@@ -38,7 +38,7 @@
 </template>
 
 <script lang="ts" setup>
-const drawer = ref(true)
+const drawer = (true)
 
 </script>
 
