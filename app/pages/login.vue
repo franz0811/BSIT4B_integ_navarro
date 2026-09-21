@@ -17,46 +17,43 @@
  </v-card-text>
  </v-card>
  </v-container>
-
- </template>
+Nuxt 4 + Vuetify • Google Sign-In Student Guide
+</template>
 <script setup lang="ts">
 // @ts-nocheck
+definePageMeta({
+  layout: false
+})
 const config = useRuntimeConfig()
-
 declare global {
-  interface Window {
-    google: any
-  }
+ interface Window {
+ google: any
+ }
 }
-
 const loginWithGoogle = () => {
-  const client = window.google.accounts.oauth2.initTokenClient({
-    client_id: config.public.googleClientId,
-    scope: 'openid email profile',
-    callback: async (response: any) => {
-      const userInfo = await $fetch(
-        'https://www.googleapis.com/oauth2/v3/userinfo',
-        {
-          headers: {
-            Authorization: `Bearer ${response.access_token}`
-          }
-        }
-      )
-
-      localStorage.setItem(
-        'google_user',
-        JSON.stringify(userInfo)
-      )
-     
-      localStorage.setItem(
-        'google_token',
-        response.access_token
-      )
-
-      navigateTo('/')
-    }
-  })
-
-  client.requestAccessToken()
+ const client = window.google.accounts.oauth2.initTokenClient({
+ client_id: config.public.googleClientId,
+ scope: 'openid email profile',
+ callback: async (response: any) => {
+ const userInfo = await $fetch(
+ 'https://www.googleapis.com/oauth2/v3/userinfo',
+ {
+ headers: {
+ Authorization: `Bearer ${response.access_token}`
+ }
+ }
+ )
+ localStorage.setItem(
+ 'google_user',
+ JSON.stringify(userInfo)
+ )
+ localStorage.setItem(
+ 'google_token',
+ response.access_token
+ )
+ navigateTo('/')
+ }
+ })
+ client.requestAccessToken()
 }
 </script>

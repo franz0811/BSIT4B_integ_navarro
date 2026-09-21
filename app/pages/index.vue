@@ -1,67 +1,40 @@
 <template>
-  <v-layout class="rounded rounded-md" style="min-height: 100vh;">
-    <v-navigation-drawer
-      expand-on-hover
-      permanent
-      rail
-    >
-      <v-list v-if="user">
-        <v-list-item
-          :prepend-avatar="user.picture"
-          :subtitle="user.email"
-          :title="user.name"
-        ></v-list-item>
-      </v-list>
-
-      <v-divider></v-divider>
-
-      <v-list density="compact" nav>
-        <v-list-item prepend-icon="mdi-folder" title="My Files" value="myfiles"></v-list-item>
-        <v-list-item prepend-icon="mdi-account-multiple" title="Shared with me" value="shared"></v-list-item>
-        <v-list-item prepend-icon="mdi-star" title="Starred" value="starred"></v-list-item>
-      </v-list>
-
-      <!-- Inilagay ang Logout button sa ilalim ng sidebar -->
-      <template v-slot:append>
-        <div class="pa-2">
-          <v-list-item
-            prepend-icon="mdi-logout"
-            title="Logout"
-            value="logout"
-            color="error"
-            @click="logout"
-          ></v-list-item>
+  <v-container>
+    <v-card v-if="user" class="pa-6">
+      <div class="d-flex align-center ga-4">
+        <v-avatar size="64">
+          <v-img :src="user.picture" />
+        </v-avatar>
+        <div>
+          <h2>{{ user.name }}</h2>
+          <p>{{ user.email }}</p>
         </div>
-      </template>
-    </v-navigation-drawer>
-
-    <!-- Inalisan ng card sa gitna -->
-    <v-main class="d-flex align-center justify-center">
-      <v-container class="fill-height d-flex align-center justify-center">
-        <!-- Main content area -->
-      </v-container>
-    </v-main>
-  </v-layout>
+      </div>
+      <v-btn color="error" class="mt-4" @click="logout">
+        Logout
+      </v-btn>
+    </v-card>
+  </v-container>
 </template>
 
 <script setup lang="ts">
 //@ts-nocheck
-const user = ref<any>(null)
-
-onMounted(() => {
-  const savedUser = localStorage.getItem('google_user')
-
-  if (savedUser) {
-    user.value = JSON.parse(savedUser)
-  } else {
-    // Awtomatikong ipapadala sa /login kapag walang naka-save na user
-    navigateTo('/login')
-  }
+definePageMeta({
+  layout: 'default'
 })
+
+const user = ref<any>(null)
 
 const logout = () => {
   localStorage.removeItem('google_user')
   localStorage.removeItem('google_token')
   navigateTo('/login')
 }
+
+onMounted(() => {
+  const savedUser = localStorage.getItem('google_user')
+  if (savedUser) {
+    user.value = JSON.parse(savedUser)
+  }
+})
 </script>
