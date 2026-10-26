@@ -2,10 +2,20 @@
   <div class="weather-page">
     <div class="weather-container">
       
-      <!-- Main Weather Content (Hero + Metrics + Daily Forecast) -->
       <div class="main-content">
         
-        <!-- Main Weather Hero Card -->
+        <!-- Search Bar -->
+        <div class="search-box">
+          <input 
+            type="text" 
+            v-model="searchQuery" 
+            @keyup.enter="handleSearch" 
+            placeholder="Search location (e.g. Manila, Tokyo)..." 
+            class="search-input"
+          />
+          <button @click="handleSearch" class="search-btn">Search</button>
+        </div>
+
         <div class="weather-card hero-card">
           <div class="location-header">
             <h2>{{ weather.location }}</h2>
@@ -19,7 +29,6 @@
           </div>
         </div>
 
-        <!-- 4 Metrics Row (Feels Like, Humidity, Wind, Pressure) -->
         <div class="metrics-grid">
           <div class="metric-card">
             <span class="metric-label">Feels Like</span>
@@ -39,7 +48,6 @@
           </div>
         </div>
 
-        <!-- Daily Forecast Section -->
         <div class="forecast-section">
           <h3 class="section-title">Daily forecast</h3>
           <div class="daily-cards">
@@ -65,67 +73,173 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 
-// Current weather status
+const searchQuery = ref('')
+
 const weather = ref({
-  location: 'San Fernando, Pampanga',
-  date: 'Monday, Oct 19, 2026',
-  condition: 'LIGHT RAIN',
-  conditionIcon: '🌧️',
-  temperature: 31
+  location: 'Loading...',
+  date: '',
+  condition: '',
+  conditionIcon: '☀️',
+  temperature: 0
 })
 
-// Metrics
 const metrics = ref({
-  feelsLike: 34,
-  humidity: 82,
-  wind: 12,
-  pressure: 1012
+  feelsLike: 0,
+  humidity: 0,
+  wind: 0,
+  pressure: 0
 })
 
-// Daily Forecast Array
-const dailyForecast = ref([
-  { name: 'Mon', icon: '🌧️', high: 31, low: 25 },
-  { name: 'Tue', icon: '🌦️', high: 32, low: 25 },
-  { name: 'Wed', icon: '☀️', high: 33, low: 26 },
-  { name: 'Thu', icon: '⛅', high: 32, low: 25 },
-  { name: 'Fri', icon: '⛈️', high: 30, low: 24 },
-  { name: 'Sat', icon: '🌧️', high: 29, low: 24 },
-  { name: 'Sun', icon: '🌩️', high: 30, low: 25 }
-])
+const dailyForecast = ref([])
+
+// Helper function to map WeatherAPI condition text/codes to emojis
+const getWeatherEmoji = (text) => {
+  const condition = text.toLowerCase()
+  if (condition.includes('thunder')) return '⛈️'
+  if (condition.includes('rain') || condition.includes('drizzle')) return '🌧️'
+  if (condition.includes('cloud') || condition.includes('overcast')) return '⛅'
+  if (condition.includes('snow')) return '❄️'
+  return '☀️'
+}
+
+// Helper function to get day name (Mon, Tue, etc.) from date string
+const getDayName = (dateString) => {
+  const date = new Date(dateString)
+  return date.toLocaleDateString('en-US', { weekday: 'short' })
+}
+
+const getWeather = async (locationQuery = 'san fernando') => {
+  try {
+    const response = await fetch(`http://api.weatherapi.com/v1/forecast.json?key=3db00128016b454e99105922262610&q=${encodeURIComponent(locationQuery)}&days=7&aqi=yes&alerts=no`)
+    const data = await response.json()
+
+    if (response.ok) {
+      weather.value = {
+        location: `${data.location.name}, ${data.location.region}`,
+        date: new Date(data.location.localtime).toLocaleDateString('en-US', { 
+          weekday: 'long', 
+          month: 'short', 
+          day: 'numeric', 
+          year: 'numeric' 
+        }),
+        condition: data.current.condition.text,
+        conditionIcon: getWeatherEmoji(data.current.condition.text),
+        temperature: Math.round(data.current.temp_c)
+      }
+
+      metrics.value = {
+        feelsLike: Math.round(data.current.feelslike_c),
+        humidity: data.current.humidity,
+        wind: Math.round(data.current.wind_kph),
+        pressure: Math.round(data.current.pressure_mb)
+      }
+
+      dailyForecast.value = data.forecast.forecastday.map(day => ({
+        name: getDayName(day.date),
+        icon: getWeatherEmoji(day.day.condition.text),
+        high: Math.round(day.day.maxtemp_c),
+        low: Math.round(day.day.mintemp_c)
+      }))
+
+      console.log('Successfully fetched and updated weather data:', data)
+    } else {
+      alert(data.error.message || 'Location not found')
+    }
+  } catch (err) {
+    console.error('Network error fetching weather:', err)
+  }
+}
+
+const handleSearch = () => {
+  if (searchQuery.value.trim() !== '') {
+    getWeather(searchQuery.value)
+  }
+}
+
+onMounted(() => {
+  getWeather('san fernando')
+})
 </script>
 
 <style scoped>
-/* Main Layout Containers */
+:global(body),
+:global(.v-application),
+:global(.v-main) {
+  background-color: #0b0c1e !important;
+  min-height: 100vh;
+}
+
 .weather-page {
   min-height: 100vh;
+  height: auto;
   background-color: #0b0c1e;
   color: #ffffff;
-  padding: 2rem;
+  padding: 1rem 1.5rem;
   font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: center; 
+  box-sizing: border-box;
+  width: 100%;
+  overflow-x: hidden;
 }
 
 .weather-container {
   max-width: 800px;
   width: 100%;
+  margin: 0 auto;
 }
 
 .main-content {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 1rem;
   width: 100%;
 }
 
-/* Hero Card */
+/* Search Bar Styles */
+.search-box {
+  display: flex;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.search-input {
+  flex: 1;
+  background-color: #171930;
+  border: 1px solid #2b32b2;
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  color: #ffffff;
+  font-size: 0.95rem;
+  outline: none;
+}
+
+.search-input::placeholder {
+  color: #8e94a8;
+}
+
+.search-btn {
+  background: linear-gradient(135deg, #2b32b2 0%, #1488cc 100%);
+  border: none;
+  border-radius: 12px;
+  padding: 0.75rem 1.25rem;
+  color: #ffffff;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.search-btn:hover {
+  opacity: 0.9;
+}
+
 .hero-card {
   background: linear-gradient(135deg, #2b32b2 0%, #1488cc 100%);
   border-radius: 20px;
-  padding: 2rem;
+  padding: 1.25rem 1.5rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -133,95 +247,95 @@ const dailyForecast = ref([
 }
 
 .location-header h2 {
-  font-size: 1.8rem;
+  font-size: 1.5rem;
   margin: 0;
   font-weight: 600;
+  word-break: break-word; 
 }
 
 .date-text {
-  margin-top: 0.4rem;
+  margin-top: 0.3rem;
   color: #d1e8ff;
-  font-size: 0.95rem;
+  font-size: 0.85rem;
 }
 
 .hero-right {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.8rem;
 }
 
 .weather-emoji {
-  font-size: 3rem;
+  font-size: 2.5rem;
 }
 
 .main-temp {
-  font-size: 3.8rem;
+  font-size: 3rem;
   font-weight: 700;
   margin: 0;
 }
 
-/* Metric Cards */
 .metrics-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 1rem;
+  gap: 0.75rem;
 }
 
 .metric-card {
   background-color: #171930;
   border-radius: 14px;
-  padding: 1.2rem;
+  padding: 0.85rem 1rem;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.3rem;
 }
 
 .metric-label {
   color: #8e94a8;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
 }
 
 .metric-value {
-  font-size: 1.3rem;
+  font-size: 1.1rem;
   font-weight: 600;
 }
 
-/* Daily Forecast */
 .section-title {
   font-size: 1.1rem;
-  margin-bottom: 0.8rem;
+  margin-bottom: 0.6rem;
   color: #e2e8f0;
 }
 
 .daily-cards {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 0.75rem;
+  gap: 0.5rem;
 }
 
 .daily-card {
   background-color: #171930;
   border-radius: 14px;
-  padding: 1rem 0.5rem;
+  padding: 0.7rem 0.3rem;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.6rem;
+  gap: 0.4rem;
+  min-width: 0;
 }
 
 .day-name {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: #a0aec0;
 }
 
 .day-icon {
-  font-size: 1.4rem;
+  font-size: 1.2rem;
 }
 
 .day-temps {
   display: flex;
   gap: 0.3rem;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
 }
 
 .temp-high {
@@ -233,13 +347,61 @@ const dailyForecast = ref([
   color: #718096;
 }
 
-/* Responsive view */
+/* --- Responsive Adjustments --- */
 @media (max-width: 768px) {
   .metrics-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+
   .daily-cards {
     grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .weather-page {
+    padding: 0.75rem; 
+    align-items: center;
+  }
+
+  .hero-card {
+    padding: 1rem;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .hero-right {
+    width: 100%;
+    justify-content: space-between;
+    flex-direction: row-reverse;
+  }
+
+  .location-header h2 {
+    font-size: 1.2rem;
+  }
+
+  .main-temp {
+    font-size: 2.2rem;
+  }
+
+  .metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+  }
+
+  .daily-cards {
+    display: flex;
+    overflow-x: auto; 
+    padding-bottom: 0.25rem;
+    scroll-snap-type: x mandatory;
+    gap: 0.4rem;
+  }
+
+  .daily-card {
+    flex: 0 0 70px;
+    scroll-snap-align: start;
+    padding: 0.6rem 0.3rem;
   }
 }
 </style>
